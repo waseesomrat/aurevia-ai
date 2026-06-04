@@ -1,0 +1,133 @@
+"use client";
+
+import { useState } from "react";
+
+export default function RoadmapPage() {
+
+  const [profession, setProfession] = useState("");
+  const [roadmap, setRoadmap] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const generateRoadmap = async () => {
+
+    if (!profession) {
+      alert("Enter a profession");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+
+      const response = await fetch(
+        "https://aurevia-backend-r18t.onrender.com/roadmap",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            profession,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      setRoadmap(data.roadmap);
+
+    } catch (error) {
+
+      console.log(error);
+
+      alert("Failed to generate roadmap");
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#020617",
+        color: "white",
+        padding: "50px",
+      }}
+    >
+      <h1
+        style={{
+          color: "#d8b4fe",
+          fontSize: "60px",
+          marginBottom: "20px",
+        }}
+      >
+        Career Roadmap Generator
+      </h1>
+
+      <input
+        type="text"
+        placeholder="Software Engineer"
+        value={profession}
+        onChange={(e) =>
+          setProfession(e.target.value)
+        }
+        style={{
+          width: "100%",
+          padding: "18px",
+          borderRadius: "15px",
+          marginBottom: "20px",
+        }}
+      />
+
+      <button
+        onClick={generateRoadmap}
+        disabled={loading}
+        style={{
+          background:
+            "linear-gradient(to right,#9333ea,#c084fc)",
+          color: "white",
+          border: "none",
+          padding: "18px 35px",
+          borderRadius: "15px",
+          cursor: "pointer",
+          fontSize: "18px",
+        }}
+      >
+        {loading
+          ? "Generating..."
+          : "Generate Roadmap"}
+      </button>
+
+      {roadmap && (
+        <div
+          style={{
+            marginTop: "40px",
+            background: "#081225",
+            border: "1px solid #9333ea",
+            borderRadius: "20px",
+            padding: "30px",
+          }}
+        >
+          <h2
+            style={{
+              color: "#d8b4fe",
+              marginBottom: "20px",
+            }}
+          >
+            Your Roadmap
+          </h2>
+
+          <p
+            style={{
+              whiteSpace: "pre-wrap",
+              lineHeight: "32px",
+            }}
+          >
+            {roadmap}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
