@@ -23,7 +23,19 @@ export default function TrackerPage() {
     setRejected] =
     useState([]);
 
+
   // LOAD DATA
+
+  const [cvData, setCvData] = useState(null);
+
+  useEffect(() => {
+  const saved =
+    localStorage.getItem("cvData");
+
+  if (saved) {
+    setCvData(JSON.parse(saved));
+  }
+}, []);
 
   useEffect(() => {
 

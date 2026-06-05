@@ -1,12 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function RoadmapPage() {
 
   const [profession, setProfession] = useState("");
   const [roadmap, setRoadmap] = useState("");
   const [loading, setLoading] = useState(false);
+ 
+  const [cvData, setCvData] = useState(null);
+
+  useEffect(() => {
+  const saved =
+    localStorage.getItem("cvData");
+
+  if (saved) {
+    setCvData(JSON.parse(saved));
+  }
+}, []);
+   
+
+  useEffect(() => {
+
+  const saved =
+    localStorage.getItem("cvData");
+
+  if (saved) {
+
+    const cv = JSON.parse(saved);
+
+    setProfession(
+    cv.profession || ""
+    );
+  }
+  }, []);
 
   const generateRoadmap = async () => {
 
@@ -19,6 +46,9 @@ export default function RoadmapPage() {
 
     try {
 
+      const cv = JSON.parse(localStorage.getItem("cvData") || "{}");
+
+
       const response = await fetch(
         "https://aurevia-backend-r18t.onrender.com/roadmap",
         {
@@ -26,10 +56,14 @@ export default function RoadmapPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            profession,
-          }),
-        }
+         
+
+              body: JSON.stringify({
+              profession,
+              skills: cv.skills,
+              summary: cv.summary,
+              })
+              }
       );
 
       const data = await response.json();

@@ -9,7 +9,16 @@ export default function ChatPage() {
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
 
+   const [cvData, setCvData] = useState(null);
 
+  useEffect(() => {
+  const saved =
+    localStorage.getItem("cvData");
+
+  if (saved) {
+    setCvData(JSON.parse(saved));
+  }
+}, []);
 
    useEffect(() => {
   const saved = localStorage.getItem("cvData");

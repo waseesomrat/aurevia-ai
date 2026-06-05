@@ -19,6 +19,7 @@ import tempfile
 import traceback
 import json
 import os
+import httpx
 
 from pydantic import BaseModel
 from typing import Optional
@@ -26,11 +27,13 @@ from threading import Lock
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 
 
 
 load_dotenv()
+
+RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
 
 app = FastAPI()
 
@@ -67,6 +70,21 @@ class DeleteCalendarEventRequest(BaseModel):
     session_id: str
     event_id: str
 
+class TodoRequest(BaseModel):
+    session_id: str
+    title: str
+    deadline: str
+class TrackerRequest(BaseModel):
+    session_id: str
+    role: str
+    company: str
+    stage: str = "Applied"
+
+
+class TrackerUpdateRequest(BaseModel):
+    session_id: str
+    application_id: str
+    stage: str
 
 @app.get("/")
 def home():
@@ -367,12 +385,12 @@ CV:
 
         with session_lock:
             user_sessions[session_id] = {
-            "cv_text": cv_text,
-            "extracted_data": data,
-            "tracker": [],
-            "todos": [],
-            "calendar": []
-    }
+                "cv_text": cv_text,
+                "extracted_data": data,
+                "tracker": [],
+                "todos": [],
+                "calendar": []
+            }
 
         data["session_id"] = session_id
 
@@ -518,7 +536,22 @@ async def generate_report(data: dict):
 @app.post("/fit-score")
 async def fit_score(data: dict):
 
-    cv_skills = data.get("skills", [])
+    session_id = data.get("session_id")
+
+    session = user_sessions.get(session_id)
+
+    if not session:
+        return {
+            "fit_score": 0,
+            "matching_skills": [],
+            "missing_skills": []
+        }
+
+    cv_skills = session["extracted_data"].get(
+        "skills",
+        []
+    )
+
     job_description = data.get(
         "job_description",
         ""
@@ -554,8 +587,7 @@ async def fit_score(data: dict):
         if (
             skill in job_description
             and skill.lower()
-            not in
-            [s.lower() for s in cv_skills]
+            not in [s.lower() for s in cv_skills]
         ):
             missing.append(skill)
 
@@ -565,24 +597,23 @@ async def fit_score(data: dict):
         "missing_skills": missing
     }
     
-    
 @app.post("/roadmap")
 async def roadmap(data: dict):
 
-    profession = data.get(
-        "profession",
-        "Software Engineer"
-    )
+    session_id = data.get("session_id")
 
-    skills = data.get(
-        "skills",
-        []
-    )
+    session = user_sessions.get(session_id)
 
-    summary = data.get(
-        "summary",
-        ""
-    )
+    if not session:
+        return {
+        "roadmap": "Invalid session"
+    }
+
+    cv = session["extracted_data"]
+
+    profession = cv.get("profession", "")
+    skills = cv.get("skills", [])
+    summary = cv.get("summary", "")
 
     prompt = f"""
 You are an expert career mentor.
@@ -672,15 +703,24 @@ Month 3
 - Optimize CV and LinkedIn
 """
         }
-
 @app.post("/cover-letter")
 async def cover_letter(data: dict):
 
-    name = data.get("name", "")
-    profession = data.get(
-        "profession",
-        ""
-    )
+    session_id = data.get("session_id")
+
+    session = user_sessions.get(session_id)
+
+    if not session:
+        return {
+            "cover_letter": "Invalid session"
+        }
+
+    cv = session["extracted_data"]
+
+    name = cv.get("name", "")
+    profession = cv.get("profession", "")
+    skills = cv.get("skills", [])
+    summary = cv.get("summary", "")
 
     job_description = data.get(
         "job_description",
@@ -690,38 +730,83 @@ async def cover_letter(data: dict):
     prompt = f"""
 Write a professional cover letter.
 
-Candidate:
+Candidate Name:
 {name}
 
 Profession:
 {profession}
 
+Skills:
+{", ".join(skills)}
+
+Summary:
+{summary}
+
 Job Description:
 {job_description}
+
+Requirements:
+- Professional tone
+- Highlight relevant skills
+- Mention candidate strengths
+- Tailor to the job description
 """
 
-    response = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )
+    try:
 
-    return {
-        "cover_letter":
-        response.choices[0].message.content
-    }
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
+
+        return {
+            "cover_letter":
+            response.choices[0].message.content
+        }
+
+    except Exception as e:
+
+        print("COVER LETTER ERROR:")
+        print(e)
+
+        return {
+            "cover_letter":
+            f"""
+Dear Hiring Manager,
+
+I am writing to express my interest in the {profession} position.
+
+My background, skills, and experience make me a strong candidate for this role.
+
+Thank you for your consideration.
+
+Sincerely,
+{name}
+"""
+        }
 
 @app.post("/chat")
 async def chat(data: dict):
 
     global vectorstore
 
+    session_id = data.get("session_id")
     question = data.get("question", "")
-    summary = data.get("summary", "")
+    history = data.get("history", [])
+
+    session = user_sessions.get(session_id)
+
+    if not session:
+        return {
+            "answer": "Invalid session. Please upload CV again."
+        }
+
+    cv = session["extracted_data"]
 
     if vectorstore is None:
         return {
@@ -737,30 +822,46 @@ async def chat(data: dict):
         [doc.page_content for doc in docs]
     )
 
-    prompt = f"""
+    messages = [
+        {
+            "role": "system",
+            "content": f"""
 You are Aurevia AI Career Assistant.
+
+Always use the candidate CV as the source of truth.
+
+Candidate Name:
+{cv.get('name', '')}
+
+Profession:
+{cv.get('profession', '')}
+
+Skills:
+{', '.join(cv.get('skills', []))}
+
+Summary:
+{cv.get('summary', '')}
 
 Retrieved CV Context:
 {context}
 
-Candidate Summary:
-{summary}
-
-Question:
-{question}
-
-Answer using the CV context and summary.
-Give practical career advice.
+Give practical career guidance.
 """
+        }
+    ]
+
+    messages.extend(history)
+
+    messages.append(
+        {
+            "role": "user",
+            "content": question
+        }
+    )
 
     response = client.chat.completions.create(
         model="llama-3.1-8b-instant",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
+        messages=messages
     )
 
     return {
@@ -768,133 +869,163 @@ Give practical career advice.
         response.choices[0].message.content
     }
     
-
 @app.post("/job-search")
 async def job_search(data: dict):
 
+    print("API KEY:", os.getenv("RAPIDAPI_KEY"))
+
     query = data.get(
         "query",
-        "Software Engineer Jobs"
+        "Software Engineer"
     )
 
-    cv = data.get("cv", {})
-
-    profession = cv.get(
-        "profession",
-        ""
+    country = data.get(
+        "country",
+        "Bangladesh"
     )
 
-    skills = cv.get(
-        "skills",
-        []
-    )
+    session_id = data.get("session_id")
 
-    summary = cv.get(
-        "summary",
-        ""
-    )
+    session = user_sessions.get(session_id)
 
-    prompt = f"""
-You are an expert career advisor and recruiter.
-
-Candidate Profession:
-{profession}
-
-Candidate Skills:
-{", ".join(skills)}
-
-Candidate Summary:
-{summary}
-
-Search Query:
-{query}
-
-Generate 5 suitable jobs for this candidate.
-
-Requirements:
-
-- Jobs must match the candidate profile.
-- Give realistic company names.
-- Give realistic salary.
-- Give fit score from 0-100.
-- Explain why the job matches.
-
-Return ONLY valid JSON.
-
-JSON Format:
-
-{{
-  "jobs": [
-    {{
-      "role": "",
-      "company": "",
-      "location": "",
-      "salary": "",
-      "deadline": "",
-      "fit_score": 0,
-      "reason": ""
-    }}
-  ]
-}}
-"""
-
-    try:
-
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            response_format={
-                "type": "json_object"
-            },
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        )
-
-        result = json.loads(
-            response.choices[0].message.content
-        )
-
-        if "jobs" not in result:
-            result["jobs"] = []
-
-        return result
-
-    except Exception as e:
-
-        print("JOB SEARCH ERROR:")
-        print(e)
-
+    if not session:
         return {
-            "jobs": [
-                {
-                    "role":
-                    "Software Engineer Intern",
-
-                    "company":
-                    "Google",
-
-                    "location":
-                    "Dhaka",
-
-                    "salary":
-                    "40,000 BDT",
-
-                    "deadline":
-                    "30 June 2026",
-
-                    "fit_score":
-                    85,
-
-                    "reason":
-                    "Matches candidate skills and profession."
-                }
-            ]
+            "jobs": [],
+            "message": "Invalid session"
         }
 
-   
+    cv = session["extracted_data"]
+
+    skills = cv.get("skills", [])
+    profession = cv.get("profession", "")
+    
+    print("CV =", cv)
+    print("SKILLS =", skills)
+
+    try:
+        url = "https://jsearch.p.rapidapi.com/search"
+
+        params = {
+            "query": f"{query} in {country}",
+            "page": "1",
+            "num_pages": "1"
+        }
+
+        headers = {
+            "X-RapidAPI-Key":
+            os.getenv("RAPIDAPI_KEY"),
+            "X-RapidAPI-Host":
+            "jsearch.p.rapidapi.com"
+        }
+
+        async with httpx.AsyncClient() as client:
+
+            response = await client.get(
+                url,
+                headers=headers,
+                params=params
+            )
+            
+            print("API KEY =", RAPIDAPI_KEY)
+
+            print("STATUS =", response.status_code)
+
+            print("RAW RESPONSE =")
+            print(response.text)
+                        
+
+        result = response.json()
+
+        jobs = []
+
+        for item in result.get("data", [])[:10]:
+
+            job_text = (
+                item.get(
+                    "job_description",
+                    ""
+                )
+            ).lower()
+
+            matched = []
+
+            for skill in skills:
+                
+                job_text = (
+                    item.get("job_title","")
+                    + " "
+                    + item.get("job_description","")
+                ).lower()
+                if skill.lower() in job_text:
+                    matched.append(skill)
+
+            fit_score = 0
+
+            if len(skills) > 0:
+
+                fit_score = int(
+                    (
+                        len(matched)
+                        /
+                        len(skills)
+                    ) * 100
+                )
+
+            jobs.append(
+                {
+                    "role":
+                    item.get(
+                        "job_title",
+                        "N/A"
+                    ),
+
+                    "company":
+                    item.get(
+                        "employer_name",
+                        "N/A"
+                    ),
+
+                    "location":
+                    item.get(
+                        "job_city",
+                        ""
+                    ),
+
+                    "salary":
+                    item.get(
+                        "job_salary",
+                        "Not specified"
+                    ),
+
+                    "apply_link":
+                    item.get(
+                        "job_apply_link",
+                        ""
+                    ),
+
+                    "fit_score":
+                    fit_score,
+
+                    "matching_skills":
+                    matched
+                }
+            )
+
+        return {
+            "jobs": jobs
+        }
+        
+    except Exception as e:
+
+        import traceback
+
+        print("========== JOB ERROR ==========")
+        print(traceback.format_exc())
+
+        return {
+            "jobs": [],
+            "message": str(e)
+        }
 
     
 @app.post("/calendar/add")
@@ -928,7 +1059,6 @@ async def add_calendar_event(
         "success": True,
         "event": event
     }
-
 
 @app.get("/calendar/list")
 async def list_calendar_events(
@@ -974,3 +1104,99 @@ async def delete_calendar_event(
     return {
         "success": True
     }
+@app.post("/todo/add")
+async def add_todo(req: TodoRequest):
+
+    session = user_sessions.get(req.session_id)
+
+    if not session:
+        return {
+            "success": False,
+            "message": "Invalid session"
+        }
+
+    todo = {
+        "id": str(uuid.uuid4()),
+        "title": req.title,
+        "deadline": req.deadline
+    }
+
+    session["todos"].append(todo)
+
+    return {
+        "success": True,
+        "todo": todo
+    }
+
+
+@app.get("/todo/list")
+async def list_todos(session_id: str):
+
+    session = user_sessions.get(session_id)
+
+    if not session:
+        return {
+            "success": False,
+            "todos": []
+        }
+
+    return {
+        "success": True,
+        "todos": session["todos"]
+    }
+
+@app.post("/tracker/add")
+async def add_tracker(req: TrackerRequest):
+
+    session = user_sessions.get(req.session_id)
+
+    if not session:
+        return {
+            "success": False
+        }
+
+    application = {
+        "id": str(uuid.uuid4()),
+        "role": req.role,
+        "company": req.company,
+        "stage": req.stage
+    }
+
+    session["tracker"].append(application)
+
+    return {
+        "success": True,
+        "application": application
+    }
+
+
+@app.get("/tracker/list")
+async def tracker_list(session_id: str):
+
+    session = user_sessions.get(session_id)
+
+    if not session:
+        return {
+            "success": False,
+            "applications": []
+        }
+
+    return {
+        "success": True,
+        "applications": session["tracker"]
+    }
+
+
+@app.put("/tracker/update-stage")
+async def update_stage(req: TrackerUpdateRequest):
+
+    session = user_sessions.get(req.session_id)
+
+    if not session:
+        return {"success": False}
+
+    for application in session["tracker"]:
+        if application["id"] == req.application_id:
+            application["stage"] = req.stage
+
+    return {"success": True}

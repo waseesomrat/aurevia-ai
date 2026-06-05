@@ -1,13 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function JobsPage() {
 
   const [query, setQuery] = useState("");
   const [jobs, setJobs] = useState([]);
+  const [cvData, setCvData] = useState(null);
+  const [country, setCountry] = useState("Bangladesh");
+
+  useEffect(() => {
+  const saved =
+    localStorage.getItem("cvData");
+
+  if (saved) {
+    setCvData(JSON.parse(saved));
+  }
+}, []);
+
+
+  useEffect(() => {
+
+ const saved =
+  localStorage.getItem("cvData");
+
+ if (saved) {
+
+  const cv = JSON.parse(saved);
+  console.log("CV =", cv);
+  console.log("SESSION =", cv.session_id);
+
+setCvData(cv);
+  setCvData(cv);
+
+  setQuery(
+   `${cv.profession} jobs`
+  );
+  }
+ }, []);
 
   const searchJobs = async () => {
+
+    console.log("Sending:", {
+      query,
+      country,
+      session_id: cvData?.session_id
+    });
 
     try {
 
@@ -18,9 +56,11 @@ export default function JobsPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            query,
-          }),
+         body: JSON.stringify({
+          query,
+          country,
+          session_id: cvData?.session_id
+        })
         }
       );
 
@@ -54,6 +94,23 @@ export default function JobsPage() {
       >
         Job Hunter Agent
       </h1>
+      
+      <select
+      value={country}
+      onChange={(e) => setCountry(e.target.value)}
+      style={{
+        padding: "15px",
+        borderRadius: "12px",
+        marginBottom: "20px",
+        width: "250px",
+      }}
+    >
+      <option>Bangladesh</option>
+      <option>USA</option>
+      <option>Canada</option>
+      <option>Germany</option>
+      <option>Australia</option>
+    </select>
 
       <input
         type="text"
@@ -125,6 +182,12 @@ export default function JobsPage() {
               Fit Score:
               {job.fit_score}%
             </p>
+
+            <p>
+              Match Reason:
+              {job.reason}
+            </p>
+
           </div>
         ))}
       </div>
