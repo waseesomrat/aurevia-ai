@@ -63,10 +63,11 @@ setCvData(cv);
         })
         }
       );
+        const data = await response.json();
 
-      const data = await response.json();
+        console.log("RESPONSE =", data);
 
-      setJobs(data.jobs);
+        setJobs(data.jobs || []);
 
     } catch (error) {
 
@@ -141,6 +142,10 @@ setCvData(cv);
       >
         Search Jobs
       </button>
+
+        <pre style={{ color: "white" }}>
+        {JSON.stringify(jobs, null, 2)}
+      </pre>
 
       <div
         style={{
