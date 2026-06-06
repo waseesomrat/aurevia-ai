@@ -2,7 +2,13 @@ fastapi
 uvicorn
 groq
 python-dotenv
-httpx
-python-multipart
 PyPDF2
 reportlab
+faiss-cpu
+sentence-transformers
+langchain
+langchain-community
+langchain-huggingface
+langchain-text-splitters
+httpx
+python-multipart
