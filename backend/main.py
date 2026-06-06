@@ -5,6 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from groq import Groq
 from PyPDF2 import PdfReader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+
 
 from fastapi.responses import FileResponse
 from reportlab.platypus import (
