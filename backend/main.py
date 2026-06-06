@@ -55,11 +55,18 @@ client = Groq(api_key=GROQ_API_KEY)
 user_sessions = {}
 session_lock = Lock()
 
-embedding_model = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
-
+embedding_model = None
 vectorstore = None
+
+def get_embedding_model():
+    global embedding_model
+
+    if embedding_model is None:
+        embedding_model = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+
+    return embedding_model
 
 
 class CalendarEventRequest(BaseModel):
@@ -175,8 +182,9 @@ async def analyze(file: UploadFile = File(...)):
 
         vectorstore = FAISS.from_texts(
             chunks,
-            embedding_model
+            get_embedding_model()
         )
+        
 
         if not cv_text.strip():
 
