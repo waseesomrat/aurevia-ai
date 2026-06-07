@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-
+const API_URL =
+  "https://aurevia-backend-production-41e5.up.railway.app";
 export default function CalendarPage() {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
@@ -15,9 +16,8 @@ export default function CalendarPage() {
     if (!session_id) return;
 
     const res = await fetch(
-      `http://localhost:8000/calendar/list?session_id=${session_id}`,
+       `${API_URL}/calendar/list?session_id=${session_id}`,
     );
-
     const data = await res.json();
 
     if (data.events) {
@@ -33,7 +33,7 @@ export default function CalendarPage() {
       return;
     }
 
-    await fetch("http://localhost:8000/calendar/add", {
+      await fetch(`${API_URL}/calendar/add`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
