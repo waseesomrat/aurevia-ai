@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-
+const API_URL =
+  "https://aurevia-backend-production-41e5.up.railway.app";
 export default function AnalyzePage() {
   const [file, setFile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -44,8 +45,8 @@ export default function AnalyzePage() {
   }, 700);
 
   try {
-    const response = await fetch(
-      "https://aurevia-backend-r18t.onrender.com/analyze",
+   const response = await fetch(
+  `${API_URL}/analyze`,
       {
         method: "POST",
         body: formData,
@@ -55,10 +56,13 @@ export default function AnalyzePage() {
     const data = await response.json();
 
     clearInterval(interval);
-
-    setProgress(100);
-    setStage("✅ Analysis Complete");
-
+    if (data.session_id) {
+  localStorage.setItem(
+    "session_id",
+    data.session_id
+  );
+}
+   
     setResult(data);
 
     localStorage.setItem(
@@ -87,8 +91,8 @@ export default function AnalyzePage() {
   
   const downloadPDF = async () => {
   try {
-    const response = await fetch(
-      "https://aurevia-backend-r18t.onrender.com/generate-report",
+      const response = await fetch(
+  `${API_URL}/generate-report`,
       {
         method: "POST",
         headers: {
