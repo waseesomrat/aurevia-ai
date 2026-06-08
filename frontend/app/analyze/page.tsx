@@ -64,7 +64,7 @@ export default function AnalyzePage() {
 
     clearInterval(interval);
   if (data.session_id) {
-  sessionStorage.setItem(
+  localStorage.setItem(
     "session_id",
     data.session_id
   );
@@ -72,7 +72,7 @@ export default function AnalyzePage() {
 
 setResult(data);
 
-sessionStorage.setItem(
+localStorage.setItem(
   "cvData",
   JSON.stringify(data)
 );

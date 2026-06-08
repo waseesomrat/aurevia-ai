@@ -11,7 +11,7 @@ export default function CalendarPage() {
   const [events, setEvents] = useState<any[]>([]);
 
   const loadEvents = async () => {
-    const session_id = sessionStorage.getItem("session_id");
+    const session_id = localStorage.getItem("session_id");
 
     if (!session_id) return;
 
@@ -26,7 +26,7 @@ export default function CalendarPage() {
   };
 
   const addEvent = async () => {
-    const session_id = sessionStorage.getItem("session_id");
+    const session_id = localStorage.getItem("session_id");
 
     if (!session_id) {
       alert("Upload CV first");

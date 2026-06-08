@@ -13,7 +13,7 @@ export default function ChatPage() {
 
   useEffect(() => {
   const saved =
-    sessionStorage.getItem("cvData");
+    localStorage.getItem("cvData");
 
   if (saved) {
     setCvData(JSON.parse(saved));
@@ -21,7 +21,7 @@ export default function ChatPage() {
 }, []);
 
    useEffect(() => {
-  const saved = sessionStorage.getItem("cvData");
+  const saved = localStorage.getItem("cvData");
 
   if (saved) {
     const cv = JSON.parse(saved);

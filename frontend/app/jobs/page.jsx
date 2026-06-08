@@ -11,7 +11,7 @@ export default function JobsPage() {
 
   useEffect(() => {
   const saved =
-    sessionStorage.getItem("cvData");
+    localStorage.getItem("cvData");
 
   if (saved) {
     setCvData(JSON.parse(saved));
@@ -22,7 +22,7 @@ export default function JobsPage() {
   useEffect(() => {
 
  const saved =
-  sessionStorage.getItem("cvData");
+  localStorage.getItem("cvData");
 
  if (saved) {
 
