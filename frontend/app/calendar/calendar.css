@@ -1,0 +1,38 @@
+.fc {
+  color: white;
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: #334155;
+}
+
+.fc-theme-standard .fc-scrollgrid {
+  border-color: #334155;
+}
+
+.fc-toolbar-title {
+  color: #d8b4fe;
+}
+
+.fc-col-header-cell {
+  color: #d8b4fe;
+}
+
+.fc-daygrid-day-number {
+  color: white;
+}
+
+.fc-button-primary {
+  background: #9333ea !important;
+  border: none !important;
+}
+
+.fc-button-primary:hover {
+  background: #a855f7 !important;
+}
+
+.fc-event {
+  background: #9333ea;
+  border: none;
+}
