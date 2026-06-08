@@ -64,6 +64,7 @@ export default function Home() {
     <Link href="/jobs">Jobs</Link>
     <Link href="/tracker">Tracker</Link>
     <Link href="/dashboard"> Dashboard</Link>
+    <Link href="/calendar">Calendar</Link>
     <Link href="/todo">Goals</Link>
     <Link href="/chat">AI Assistant</Link>
     <Link href="/cover-letter">Cover Letter</Link>
