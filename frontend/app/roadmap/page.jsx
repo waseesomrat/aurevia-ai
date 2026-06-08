@@ -8,7 +8,7 @@
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-      const saved = localStorage.getItem("cvData");
+      const saved = sessionStorage.getItem("cvData");
 
       if (saved) {
         const cv = JSON.parse(saved);

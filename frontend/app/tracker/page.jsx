@@ -30,7 +30,7 @@ export default function TrackerPage() {
 
   useEffect(() => {
   const saved =
-    localStorage.getItem("cvData");
+    sessionStorage.getItem("cvData");
 
   if (saved) {
     setCvData(JSON.parse(saved));

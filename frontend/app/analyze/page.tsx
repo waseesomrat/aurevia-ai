@@ -10,7 +10,7 @@ export default function AnalyzePage() {
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState("");
   useEffect(() => {
-  const saved = localStorage.getItem("cvData");
+  const saved = sessionStorage.getItem("cvData");
 
   if (saved) {
     setResult(JSON.parse(saved));

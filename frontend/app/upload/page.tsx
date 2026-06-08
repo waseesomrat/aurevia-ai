@@ -71,7 +71,7 @@ const [atsScore, setAtsScore] = useState(0);
   }
     
      useEffect(() => {
-      const saved =localStorage.getItem("cvData");
+      const saved =sessionStorage.getItem("cvData");
 
         if (saved) {
       const data = JSON.parse(saved);
