@@ -3,40 +3,20 @@
 import { useEffect, useState } from "react";
 
 export default function RoadmapPage() {
-
   const [profession, setProfession] = useState("");
   const [roadmap, setRoadmap] = useState("");
   const [loading, setLoading] = useState(false);
- 
-  const [cvData, setCvData] = useState(null);
 
   useEffect(() => {
-  const saved =
-    localStorage.getItem("cvData");
+    const saved = localStorage.getItem("cvData");
 
-  if (saved) {
-    setCvData(JSON.parse(saved));
-  }
-}, []);
-   
-
-  useEffect(() => {
-
-  const saved =
-    localStorage.getItem("cvData");
-
-  if (saved) {
-
-    const cv = JSON.parse(saved);
-
-    setProfession(
-    cv.profession || ""
-    );
-  }
+    if (saved) {
+      const cv = JSON.parse(saved);
+      setProfession(cv.profession || "");
+    }
   }, []);
 
   const generateRoadmap = async () => {
-
     if (!profession) {
       alert("Enter a profession");
       return;
@@ -45,35 +25,31 @@ export default function RoadmapPage() {
     setLoading(true);
 
     try {
+      const session_id =
+        localStorage.getItem("session_id");
 
-      const cv = JSON.parse(localStorage.getItem("cvData") || "{}");
-
+      const API_URL =
+        "https://aurevia-backend-production-41e5.up.railway.app";
 
       const response = await fetch(
-        "https://aurevia-backend-r18t.onrender.com/roadmap",
+        `${API_URL}/roadmap`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
-         
-
-              body: JSON.stringify({
-              profession,
-              skills: cv.skills,
-              summary: cv.summary,
-              })
-              }
+          body: JSON.stringify({
+            session_id,
+          }),
+        }
       );
 
       const data = await response.json();
 
       setRoadmap(data.roadmap);
-
     } catch (error) {
-
       console.log(error);
-
       alert("Failed to generate roadmap");
     }
 

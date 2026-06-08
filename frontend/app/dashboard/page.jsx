@@ -28,8 +28,8 @@ const [cvData, setCvData] = useState(null);
 
 
 
-const [roadmapProgress] =
-  useState(65);
+const [roadmapProgress, setRoadmapProgress] =
+  useState(0);
 
  
    useEffect(() => {
@@ -105,6 +105,15 @@ const [roadmapProgress] =
 
 
     setGoals(todo.length);
+    let progress = 0;
+
+    if (cvData) progress += 20;
+    if (todo.length > 0) progress += 20;
+    if (totalApplications > 0) progress += 20;
+    if (interviewing.length > 0) progress += 20;
+    if (offer.length > 0) progress += 20;
+
+    setRoadmapProgress(progress);
 
 }, []);
 
@@ -189,6 +198,10 @@ const [roadmapProgress] =
      title="Offers"
      value={offerCount}
      />
+     <Card
+      title="Applications"
+      value={applications}
+    />
 
      <Card
      title="Rejected"
