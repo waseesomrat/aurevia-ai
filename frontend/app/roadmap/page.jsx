@@ -1,5 +1,5 @@
 "use client";
-
+import ReactMarkdown from "react-markdown";
 import { useEffect, useState } from "react";
 
 export default function RoadmapPage() {
@@ -128,14 +128,57 @@ export default function RoadmapPage() {
             Your Roadmap
           </h2>
 
-          <p
-            style={{
-              whiteSpace: "pre-wrap",
-              lineHeight: "32px",
-            }}
-          >
-            {roadmap}
-          </p>
+          <div
+      
+  style={{
+    lineHeight: "32px",
+    color: "white",
+    fontSize: "18px",
+  }}
+>
+  <ReactMarkdown
+    components={{
+      h1: ({ children }) => (
+        <h1
+          style={{
+            color: "#d8b4fe",
+            marginBottom: "15px",
+          }}
+        >
+          {children}
+        </h1>
+      ),
+      h2: ({ children }) => (
+        <h2
+          style={{
+            color: "#c084fc",
+            marginTop: "20px",
+            marginBottom: "10px",
+          }}
+        >
+          {children}
+        </h2>
+      ),
+      h3: ({ children }) => (
+        <h3
+          style={{
+            color: "#e9d5ff",
+            marginTop: "15px",
+          }}
+        >
+          {children}
+        </h3>
+      ),
+      li: ({ children }) => (
+        <li style={{ marginBottom: "8px" }}>
+          {children}
+        </li>
+      ),
+    }}
+  >
+    {roadmap}
+  </ReactMarkdown>
+</div>
         </div>
       )}
     </div>
