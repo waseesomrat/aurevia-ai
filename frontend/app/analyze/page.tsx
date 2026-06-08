@@ -1,6 +1,6 @@
 "use client";
-
-import { useState } from "react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 const API_URL =
   "https://aurevia-backend-production-41e5.up.railway.app";
 export default function AnalyzePage() {
@@ -9,6 +9,13 @@ export default function AnalyzePage() {
   const [result, setResult] = useState<any>(null);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState("");
+  useEffect(() => {
+  const saved = localStorage.getItem("cvData");
+
+  if (saved) {
+    setResult(JSON.parse(saved));
+  }
+}, []);
   const handleUpload = async () => {
   if (!file) {
     alert("Please upload a CV PDF");
@@ -109,12 +116,14 @@ export default function AnalyzePage() {
 
     const a =
       document.createElement("a");
-
     a.href = url;
-    a.download =
-      "Aurevia_Report.pdf";
+a.download = "Aurevia_Report.pdf";
 
-    a.click();
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+
+window.URL.revokeObjectURL(url);
 
   } catch (error) {
     console.log(error);
@@ -528,11 +537,11 @@ function Card({
 
       
 
-      function FeatureButton(props: any) {
+   function FeatureButton(props: any) {
   const { title, link } = props;
 
   return (
-    <a
+    <Link
       href={link}
       style={{
         textDecoration: "none",
@@ -553,6 +562,6 @@ function Card({
       >
         {title}
       </div>
-    </a>
+    </Link>
   );
 }
