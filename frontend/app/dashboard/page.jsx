@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState,} from "react";
-console.log(JSON.parse(localStorage.getItem("cvData")));
+
 export default function DashboardPage() {
 
   const [appliedCount, setAppliedCount] =
@@ -33,12 +33,10 @@ const [roadmapProgress, setRoadmapProgress] =
 
  
    useEffect(() => {
-
     const saved = localStorage.getItem("cvData");
 if (saved) {
   const data = JSON.parse(saved);
 
-  console.log("CV DATA =", data);
 
   setCvData(data);
 
@@ -108,7 +106,7 @@ if (saved) {
     setGoals(todo.length);
     let progress = 0;
 
-    if (cvData) progress += 20;
+    if (saved) progress += 20;
     if (todo.length > 0) progress += 20;
     if (totalApplications > 0) progress += 20;
     if (interviewing.length > 0) progress += 20;
