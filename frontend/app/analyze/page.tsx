@@ -63,19 +63,19 @@ export default function AnalyzePage() {
     const data = await response.json();
 
     clearInterval(interval);
-    if (data.session_id) {
-  localStorage.setItem(
+  if (data.session_id) {
+  sessionStorage.setItem(
     "session_id",
     data.session_id
   );
 }
-   
-    setResult(data);
 
-    localStorage.setItem(
-      "cvData",
-      JSON.stringify(data)
-    );
+setResult(data);
+
+sessionStorage.setItem(
+  "cvData",
+  JSON.stringify(data)
+);
 
     setTimeout(() => {
       setLoading(false);
