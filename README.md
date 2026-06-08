@@ -138,7 +138,7 @@ GROQ_API_KEY=your_api_key_here
 ## Live Demo
 
 Frontend:
-https://aurevia-frontend-64rno3rye-intezar-mahmud-wasi-s-projects.vercel.app
+https://aurevia-frontend.vercel.app
 
 Backend:
 https://aurevia-backend-production-41e5.up.railway.app
